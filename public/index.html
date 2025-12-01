@@ -26,21 +26,35 @@
 
     <!-- Chat Interface -->
     <div id="chat-container" style="display: none;">
-        <header>
-            <h1>💬 Chat Global</h1>
-            <div id="status">Online</div>
-        </header>
+        <!-- Sidebar -->
+        <aside id="sidebar">
+            <div class="sidebar-header">Salas</div>
+            <ul id="room-list">
+                <li class="room active" data-room="Geral"># Geral</li>
+                <li class="room" data-room="Dev"># Dev</li>
+                <li class="room" data-room="Design"># Design</li>
+                <li class="room" data-room="Random"># Random</li>
+            </ul>
+        </aside>
 
-        <div id="messages">
-            <!-- Messages will appear here -->
-        </div>
+        <!-- Main Chat Area -->
+        <main id="main-chat">
+            <header>
+                <h1 id="current-room-name"># Geral</h1>
+                <div id="status">Online</div>
+            </header>
 
-        <div id="typing-indicator"></div>
+            <div id="messages">
+                <!-- Messages will appear here -->
+            </div>
 
-        <form id="form" action="">
-            <input id="input" autocomplete="off" placeholder="Digite sua mensagem..." />
-            <button>Enviar</button>
-        </form>
+            <div id="typing-indicator"></div>
+
+            <form id="form" action="">
+                <input id="input" autocomplete="off" placeholder="Digite sua mensagem..." />
+                <button>Enviar</button>
+            </form>
+        </main>
     </div>
 
     <script src="/socket.io/socket.io.js"></script>

@@ -9,8 +9,11 @@ const form = document.getElementById('form');
 const input = document.getElementById('input');
 const messages = document.getElementById('messages');
 const typingIndicator = document.getElementById('typing-indicator');
+const roomList = document.getElementById('room-list');
+const currentRoomName = document.getElementById('current-room-name');
 
 let myUsername = '';
+let currentRoom = 'Geral';
 let typingTimeout;
 
 // Login Logic
@@ -19,12 +22,43 @@ loginForm.addEventListener('submit', (e) => {
     const username = usernameInput.value.trim();
     if (username) {
         myUsername = username;
-        socket.emit('set username', username);
+        // Join default room
+        joinRoom('Geral');
+
         loginScreen.style.display = 'none';
         chatContainer.style.display = 'flex';
         input.focus();
     }
 });
+
+// Room Switching Logic
+roomList.addEventListener('click', (e) => {
+    if (e.target.classList.contains('room')) {
+        const roomName = e.target.getAttribute('data-room');
+        if (roomName !== currentRoom) {
+            joinRoom(roomName);
+        }
+    }
+});
+
+function joinRoom(roomName) {
+    currentRoom = roomName;
+    currentRoomName.textContent = `# ${roomName}`;
+
+    // Update active class in sidebar
+    document.querySelectorAll('.room').forEach(el => {
+        el.classList.remove('active');
+        if (el.getAttribute('data-room') === roomName) {
+            el.classList.add('active');
+        }
+    });
+
+    // Clear messages
+    messages.innerHTML = '';
+
+    // Emit join event
+    socket.emit('join', { username: myUsername, room: roomName });
+}
 
 // Chat Logic
 form.addEventListener('submit', (e) => {

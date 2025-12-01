@@ -14,46 +14,56 @@ app.get('/', (req, res) => {
     res.sendFile(__dirname + '/public/index.html');
 });
 
-// Armazena os usuários conectados: { socketId: username }
+// Armazena os usuários conectados: { socketId: { username, room } }
 const users = {};
 
 // Lógica do WebSocket
 io.on('connection', (socket) => {
     console.log('Um utilizador conectou-se (ID: ' + socket.id + ')');
 
-    // Evento para definir o nome de usuário
-    socket.on('set username', (username) => {
-        users[socket.id] = username;
-        console.log(`Usuário definido: ${username} (${socket.id})`);
-        // Avisa a todos que alguém entrou
-        io.emit('system message', `${username} entrou no chat`);
+    // Evento para definir o nome de usuário e entrar na sala padrão
+    socket.on('join', ({ username, room }) => {
+        // Sai da sala anterior se houver
+        if (users[socket.id] && users[socket.id].room) {
+            socket.leave(users[socket.id].room);
+            io.to(users[socket.id].room).emit('system message', `${users[socket.id].username} saiu da sala`);
+        }
+
+        const roomName = room || 'Geral';
+        users[socket.id] = { username, room: roomName };
+
+        socket.join(roomName);
+        console.log(`${username} entrou na sala ${roomName} (${socket.id})`);
+
+        // Avisa a sala que alguém entrou
+        io.to(roomName).emit('system message', `${username} entrou na sala`);
     });
 
     // O servidor fica a "ouvir" o evento 'chat message' vindo deste cliente
     socket.on('chat message', (msg) => {
-        const username = users[socket.id];
-        if (username) {
-            console.log(`Mensagem de ${username}: ${msg}`);
-            // Envia objeto com nome e mensagem
-            io.emit('chat message', { username: username, msg: msg });
+        const user = users[socket.id];
+        if (user) {
+            console.log(`Mensagem de ${user.username} em ${user.room}: ${msg}`);
+            // Envia objeto com nome e mensagem APENAS para a sala
+            io.to(user.room).emit('chat message', { username: user.username, msg: msg });
         }
     });
 
     // Evento de "Digitando..."
     socket.on('typing', () => {
-        const username = users[socket.id];
-        if (username) {
-            // Envia para todos EXCETO quem está digitando
-            socket.broadcast.emit('typing', { username: username });
+        const user = users[socket.id];
+        if (user) {
+            // Envia para todos na sala EXCETO quem está digitando
+            socket.to(user.room).emit('typing', { username: user.username });
         }
     });
 
     // Evento padrão de desconexão
     socket.on('disconnect', () => {
-        const username = users[socket.id];
-        if (username) {
-            console.log(`${username} desconectou-se`);
-            io.emit('system message', `${username} saiu do chat`);
+        const user = users[socket.id];
+        if (user) {
+            console.log(`${user.username} desconectou-se`);
+            io.to(user.room).emit('system message', `${user.username} saiu do chat`);
             delete users[socket.id];
         } else {
             console.log('Utilizador desconhecido desconectou-se');
