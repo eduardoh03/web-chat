@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Interativo</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+</head>
+
+<body>
+
+    <!-- Login Screen -->
+    <div id="login-screen">
+        <div class="login-container">
+            <h2>Bem-vindo ao Chat</h2>
+            <p>Escolha um apelido para entrar</p>
+            <form id="login-form">
+                <input type="text" id="username-input" placeholder="Seu apelido..." required autocomplete="off"
+                    maxlength="15">
+                <button type="submit">Entrar</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Chat Interface -->
+    <div id="chat-container" style="display: none;">
+        <header>
+            <h1>💬 Chat Global</h1>
+            <div id="status">Online</div>
+        </header>
+
+        <div id="messages">
+            <!-- Messages will appear here -->
+        </div>
+
+        <div id="typing-indicator"></div>
+
+        <form id="form" action="">
+            <input id="input" autocomplete="off" placeholder="Digite sua mensagem..." />
+            <button>Enviar</button>
+        </form>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="client.js"></script>
+</body>
+
+</html>
