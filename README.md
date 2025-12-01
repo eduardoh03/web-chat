@@ -40,6 +40,6 @@
 4. **Access the application**
    Open your browser and navigate to `http://localhost:3000`.
 
-## 📄 License
+## License
 
 This project is licensed under the MIT License.
