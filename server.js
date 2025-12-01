@@ -1,10 +1,27 @@
 const express = require('express');
 const http = require('http');
 const { Server } = require("socket.io");
+const mongoose = require('mongoose');
+require('dotenv').config();
 
 const app = express();
 const server = http.createServer(app); // Cria o servidor HTTP
 const io = new Server(server); // Acopla o Socket.io ao servidor HTTP
+
+// Conectar ao MongoDB
+mongoose.connect(process.env.MONGO_URI)
+    .then(() => console.log('Conectado ao MongoDB'))
+    .catch(err => console.error('Erro ao conectar ao MongoDB:', err));
+
+// Definir Schema de Mensagem
+const messageSchema = new mongoose.Schema({
+    username: String,
+    room: String,
+    msg: String,
+    timestamp: { type: Date, default: Date.now }
+});
+
+const Message = mongoose.model('Message', messageSchema);
 
 // Servir arquivos estáticos da pasta 'public'
 app.use(express.static('public'));
@@ -22,7 +39,7 @@ io.on('connection', (socket) => {
     console.log('Um utilizador conectou-se (ID: ' + socket.id + ')');
 
     // Evento para definir o nome de usuário e entrar na sala padrão
-    socket.on('join', ({ username, room }) => {
+    socket.on('join', async ({ username, room }) => {
         // Sai da sala anterior se houver
         if (users[socket.id] && users[socket.id].room) {
             socket.leave(users[socket.id].room);
@@ -37,13 +54,32 @@ io.on('connection', (socket) => {
 
         // Avisa a sala que alguém entrou
         io.to(roomName).emit('system message', `${username} entrou na sala`);
+
+        // Carregar histórico de mensagens
+        try {
+            const messages = await Message.find({ room: roomName }).sort({ timestamp: 1 }).limit(50);
+            messages.forEach(msg => {
+                socket.emit('chat message', { username: msg.username, msg: msg.msg });
+            });
+        } catch (err) {
+            console.error('Erro ao carregar mensagens:', err);
+        }
     });
 
     // O servidor fica a "ouvir" o evento 'chat message' vindo deste cliente
-    socket.on('chat message', (msg) => {
+    socket.on('chat message', async (msg) => {
         const user = users[socket.id];
         if (user) {
             console.log(`Mensagem de ${user.username} em ${user.room}: ${msg}`);
+
+            // Salvar no banco de dados
+            const newMessage = new Message({
+                username: user.username,
+                room: user.room,
+                msg: msg
+            });
+            await newMessage.save();
+
             // Envia objeto com nome e mensagem APENAS para a sala
             io.to(user.room).emit('chat message', { username: user.username, msg: msg });
         }
