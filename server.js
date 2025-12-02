@@ -66,6 +66,47 @@ io.on('connection', (socket) => {
         }
     });
 
+    // Evento para entrar em DM
+    socket.on('join dm', async ({ targetUsername }) => {
+        const user = users[socket.id];
+        if (!user) return;
+
+        const myUsername = user.username;
+        // Lógica de DM: Ordenar nomes alfabeticamente
+        const dmRoomName = [myUsername, targetUsername].sort().join('_');
+
+        // Sai da sala anterior
+        if (user.room) {
+            socket.leave(user.room);
+        }
+
+        user.room = dmRoomName;
+        socket.join(dmRoomName);
+        console.log(`${myUsername} entrou na DM ${dmRoomName} (${socket.id})`);
+
+        // Emite evento de volta para o cliente saber que entrou na DM
+        socket.emit('dm joined', { room: dmRoomName, target: targetUsername });
+
+        // Notificar o usuário alvo que alguém quer falar com ele
+        // Precisamos encontrar o socket do targetUsername
+        for (const [id, u] of Object.entries(users)) {
+            if (u.username === targetUsername) {
+                io.to(id).emit('dm notification', { sender: myUsername, room: dmRoomName });
+                break;
+            }
+        }
+
+        // Carregar histórico de mensagens da DM
+        try {
+            const messages = await Message.find({ room: dmRoomName }).sort({ timestamp: 1 }).limit(50);
+            messages.forEach(msg => {
+                socket.emit('chat message', { username: msg.username, msg: msg.msg });
+            });
+        } catch (err) {
+            console.error('Erro ao carregar mensagens da DM:', err);
+        }
+    });
+
     // O servidor fica a "ouvir" o evento 'chat message' vindo deste cliente
     socket.on('chat message', async (msg) => {
         const user = users[socket.id];

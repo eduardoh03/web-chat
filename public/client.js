@@ -10,6 +10,8 @@ const input = document.getElementById('input');
 const messages = document.getElementById('messages');
 const typingIndicator = document.getElementById('typing-indicator');
 const roomList = document.getElementById('room-list');
+const dmList = document.getElementById('dm-list');
+const newDmBtn = document.getElementById('new-dm-btn');
 const currentRoomName = document.getElementById('current-room-name');
 
 let myUsername = '';
@@ -41,12 +43,28 @@ roomList.addEventListener('click', (e) => {
     }
 });
 
+// DM Switching Logic
+dmList.addEventListener('click', (e) => {
+    if (e.target.classList.contains('dm-item')) {
+        const targetUser = e.target.getAttribute('data-target');
+        socket.emit('join dm', { targetUsername: targetUser });
+    }
+});
+
+// New DM Logic
+newDmBtn.addEventListener('click', () => {
+    const targetUser = prompt('Digite o nome do usuário para conversar:');
+    if (targetUser && targetUser !== myUsername) {
+        socket.emit('join dm', { targetUsername: targetUser });
+    }
+});
+
 function joinRoom(roomName) {
     currentRoom = roomName;
     currentRoomName.textContent = `# ${roomName}`;
 
     // Update active class in sidebar
-    document.querySelectorAll('.room').forEach(el => {
+    document.querySelectorAll('.room, .dm-item').forEach(el => {
         el.classList.remove('active');
         if (el.getAttribute('data-room') === roomName) {
             el.classList.add('active');
@@ -59,6 +77,56 @@ function joinRoom(roomName) {
     // Emit join event
     socket.emit('join', { username: myUsername, room: roomName });
 }
+
+// Handle DM Joined
+socket.on('dm joined', (data) => {
+    currentRoom = data.room;
+    currentRoomName.textContent = `@ ${data.target}`;
+
+    // Clear messages
+    messages.innerHTML = '';
+
+    // Check if DM is already in list
+    let existingDm = document.querySelector(`.dm-item[data-target="${data.target}"]`);
+    if (!existingDm) {
+        const li = document.createElement('li');
+        li.classList.add('dm-item');
+        li.setAttribute('data-target', data.target);
+        li.setAttribute('data-room', data.room);
+        li.textContent = `@ ${data.target}`;
+        dmList.appendChild(li);
+        existingDm = li;
+    }
+
+    // Update active class
+    document.querySelectorAll('.room, .dm-item').forEach(el => el.classList.remove('active'));
+    existingDm.classList.add('active');
+});
+
+// Handle DM Notification (when someone else starts a DM with me)
+socket.on('dm notification', (data) => {
+    // Check if DM is already in list
+    let existingDm = document.querySelector(`.dm-item[data-target="${data.sender}"]`);
+    if (!existingDm) {
+        const li = document.createElement('li');
+        li.classList.add('dm-item');
+        li.setAttribute('data-target', data.sender);
+        li.setAttribute('data-room', data.room);
+        li.textContent = `@ ${data.sender}`;
+        dmList.appendChild(li);
+
+        // Optional: Add a visual indicator (badge) or sound here
+        li.style.fontWeight = 'bold'; // Simple visual cue
+        li.style.color = 'var(--primary-color)';
+        li.style.borderLeftColor = 'var(--primary-color)';
+        li.style.borderLeftWidth = '4px';
+        li.style.borderLeftStyle = 'solid';
+        li.style.transition = 'all 0.3s ease';
+        li.style.cursor = 'pointer';
+        li.style.marginTop = '10px';
+
+    }
+});
 
 // Chat Logic
 form.addEventListener('submit', (e) => {

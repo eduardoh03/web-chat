@@ -108,37 +108,67 @@ body {
 }
 
 .sidebar-header {
-    padding: 1.5rem 1rem;
+    padding: 1.5rem 1rem 0.5rem;
     font-weight: bold;
-    font-size: 1.1rem;
-    border-bottom: 1px solid var(--border-color);
-    color: var(--text-color);
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    color: var(--secondary-text);
+    letter-spacing: 1px;
 }
 
-#room-list {
+#room-list,
+#dm-list {
     list-style: none;
     padding: 0;
     margin: 0;
     overflow-y: auto;
+    flex-shrink: 0;
 }
 
-.room {
-    padding: 1rem;
+#dm-list {
+    flex-grow: 1;
+    /* Allow DM list to take remaining space */
+}
+
+.room,
+.dm-item {
+    padding: 0.8rem 1rem;
     cursor: pointer;
     transition: background 0.2s;
-    color: var(--secondary-text);
-    border-left: 3px solid transparent;
-}
-
-.room:hover {
-    background: var(--room-hover);
     color: var(--text-color);
+    border-left: 3px solid transparent;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
-.room.active {
+.room:hover,
+.dm-item:hover {
+    background: var(--room-hover);
+}
+
+.room.active,
+.dm-item.active {
     background: rgba(0, 123, 255, 0.1);
     color: var(--primary-color);
     border-left-color: var(--primary-color);
+}
+
+#new-dm-btn {
+    margin: 1rem;
+    padding: 0.8rem;
+    background: transparent;
+    border: 1px dashed var(--secondary-text);
+    color: var(--secondary-text);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+#new-dm-btn:hover {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+    background: rgba(0, 123, 255, 0.05);
 }
 
 /* Main Chat Area */
@@ -288,19 +318,27 @@ header h1 {
         border-bottom: 1px solid var(--border-color);
     }
 
-    #room-list {
+    #room-list,
+    #dm-list {
         display: flex;
         overflow-x: auto;
         padding-bottom: 0.5rem;
     }
 
-    .room {
+    #new-dm-btn {
+        display: none;
+        /* Hide on mobile for now or adjust */
+    }
+
+    .room,
+    .dm-item {
         white-space: nowrap;
         border-left: none;
         border-bottom: 3px solid transparent;
     }
 
-    .room.active {
+    .room.active,
+    .dm-item.active {
         border-left: none;
         border-bottom-color: var(--primary-color);
     }
