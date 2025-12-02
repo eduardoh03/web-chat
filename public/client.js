@@ -93,7 +93,23 @@ socket.on('dm joined', (data) => {
         li.classList.add('dm-item');
         li.setAttribute('data-target', data.target);
         li.setAttribute('data-room', data.room);
-        li.textContent = `@ ${data.target}`;
+
+        const nameSpan = document.createElement('span');
+        nameSpan.textContent = `@ ${data.target}`;
+        li.appendChild(nameSpan);
+
+        const deleteBtn = document.createElement('span');
+        deleteBtn.textContent = '×';
+        deleteBtn.classList.add('delete-dm');
+        deleteBtn.onclick = (e) => {
+            e.stopPropagation();
+            li.remove();
+            if (currentRoom === data.room) {
+                joinRoom('Geral');
+            }
+        };
+        li.appendChild(deleteBtn);
+
         dmList.appendChild(li);
         existingDm = li;
     }
@@ -112,7 +128,20 @@ socket.on('dm notification', (data) => {
         li.classList.add('dm-item');
         li.setAttribute('data-target', data.sender);
         li.setAttribute('data-room', data.room);
-        li.textContent = `@ ${data.sender}`;
+
+        const nameSpan = document.createElement('span');
+        nameSpan.textContent = `@ ${data.sender}`;
+        li.appendChild(nameSpan);
+
+        const deleteBtn = document.createElement('span');
+        deleteBtn.textContent = '×';
+        deleteBtn.classList.add('delete-dm');
+        deleteBtn.onclick = (e) => {
+            e.stopPropagation();
+            li.remove();
+        };
+        li.appendChild(deleteBtn);
+
         dmList.appendChild(li);
 
         // Optional: Add a visual indicator (badge) or sound here
@@ -124,7 +153,6 @@ socket.on('dm notification', (data) => {
         li.style.transition = 'all 0.3s ease';
         li.style.cursor = 'pointer';
         li.style.marginTop = '10px';
-
     }
 });
 
